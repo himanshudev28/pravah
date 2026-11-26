@@ -1,0 +1,23 @@
+# Build output
+build/
+.gradle/
+.kotlin/
+*.apk
+*.aab
+
+# Local / IDE
+local.properties
+.idea/
+*.iml
+.DS_Store
+
+# Signing & secrets
+*.jks
+*.keystore
+.env*
+
+# Personal phone screenshots
+Screenshot_*.jpg
+
+# IDE compiler output (stale copies of sources)
+bin/

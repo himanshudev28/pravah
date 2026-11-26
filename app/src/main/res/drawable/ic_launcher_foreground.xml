@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Pravah ("flow") v1.1: a charge gauge ring around two flowing waves. Inside the 66dp safe zone. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- gauge track (270°, open at the bottom) -->
+    <path android:fillColor="#00000000" android:strokeColor="#2A2E30" android:strokeWidth="6.5"
+        android:strokeLineCap="round"
+        android:pathData="M39.151,68.849A21,21 0,1 1,68.849 68.849"/>
+    <!-- charge arc -->
+    <path android:fillColor="#00000000" android:strokeColor="#86D08A" android:strokeWidth="6.5"
+        android:strokeLineCap="round"
+        android:pathData="M39.151,68.849A21,21 0,1 1,72.076 43.31"/>
+    <!-- flow -->
+    <path android:fillColor="#00000000" android:strokeColor="#ECEEEC" android:strokeWidth="3.4"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M44,50.5q5,-4.5 10,0t10,0"/>
+    <path android:fillColor="#00000000" android:strokeColor="#ECEEEC" android:strokeWidth="3.4"
+        android:strokeLineCap="round" android:strokeLineJoin="round"
+        android:pathData="M44,59q5,-4.5 10,0t10,0"/>
+</vector>
