@@ -18,8 +18,20 @@ android {
         versionName = "1.1"
     }
 
+    // Release signing comes from the environment (GitHub Actions secrets); never from the repo.
+    val keystorePath = System.getenv("PRAVAH_KEYSTORE")
+    signingConfigs {
+        if (keystorePath != null) create("release") {
+            storeFile = file(keystorePath)
+            storePassword = System.getenv("PRAVAH_KEYSTORE_PASSWORD")
+            keyAlias = System.getenv("PRAVAH_KEY_ALIAS")
+            keyPassword = System.getenv("PRAVAH_KEY_PASSWORD")
+        }
+    }
+
     buildTypes {
         release {
+            if (keystorePath != null) signingConfig = signingConfigs.getByName("release")
             isMinifyEnabled = true
             isShrinkResources = true
             proguardFiles(

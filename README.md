@@ -68,3 +68,7 @@ adb install -r app/build/outputs/apk/debug/app-debug.apk
 - `PowerProfile` reflection is widely blocked on Android 9+. The app routes to manual-entry normally.
 - `getThermalHeadroom()` can return -1 or NaN even on API 29+. All such cases are treated as "unavailable" (tile hidden).
 - `cycle_count` is OEM-blocked on most devices; tile is hidden if `BATTERY_PROPERTY_CYCLE_COUNT` returns ≤ 0.
+
+## Releases
+
+Push a tag matching `versionName` (e.g. `git tag v1.1 && git push origin v1.1`). The **Release** workflow runs the tests, builds a signed, minified APK, and attaches it to a GitHub Release. The signing key lives only in the repo secrets and on the maintainer's machine (`~/.android/pravah-release.jks`).

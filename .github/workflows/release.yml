@@ -1,0 +1,78 @@
+name: Release
+
+# Push a tag like v1.1 (or run manually) → tests, signed release APK, GitHub Release.
+on:
+  push:
+    tags: ["v*"]
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag to release (e.g. v1.1). Created on the current commit if missing."
+        required: true
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      TAG: ${{ github.event.inputs.tag || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+
+      # The project's Kotlin toolchain is JDK 19; Gradle runs on it too.
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: "19"
+
+      # ./gradlew in the repo uses a locally cached distribution, so CI pins the same Gradle here.
+      - uses: gradle/actions/setup-gradle@v4
+        with:
+          gradle-version: "8.11.1"
+
+      - name: Check tag matches versionName
+        run: |
+          version=$(sed -n 's/.*versionName = "\(.*\)".*/\1/p' app/build.gradle.kts)
+          echo "versionName=$version tag=$TAG"
+          [ "v$version" = "$TAG" ] || { echo "::error::Tag $TAG does not match versionName $version"; exit 1; }
+          echo "VERSION=$version" >> "$GITHUB_ENV"
+
+      - name: Decode signing key
+        env:
+          KEYSTORE_B64: ${{ secrets.PRAVAH_KEYSTORE_B64 }}
+        run: |
+          echo "$KEYSTORE_B64" | base64 -d > "$RUNNER_TEMP/pravah-release.jks"
+          echo "PRAVAH_KEYSTORE=$RUNNER_TEMP/pravah-release.jks" >> "$GITHUB_ENV"
+
+      - name: Test and build signed release APK
+        env:
+          PRAVAH_KEYSTORE_PASSWORD: ${{ secrets.PRAVAH_KEYSTORE_PASSWORD }}
+          PRAVAH_KEY_ALIAS: ${{ secrets.PRAVAH_KEY_ALIAS }}
+          PRAVAH_KEY_PASSWORD: ${{ secrets.PRAVAH_KEY_PASSWORD }}
+        run: gradle --no-daemon :engine:test :app:assembleRelease
+
+      - name: Verify signature
+        run: |
+          apk=app/build/outputs/apk/release/app-release.apk
+          "$ANDROID_HOME"/build-tools/$(ls "$ANDROID_HOME"/build-tools | sort -V | tail -1)/apksigner verify --print-certs "$apk" | head -3
+          cp "$apk" "pravah-$TAG.apk"
+          sha256sum "pravah-$TAG.apk" > "pravah-$TAG.apk.sha256"
+
+      - name: Publish GitHub Release
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          notes=$(awk '/^## What.s new in /{f=1;next} /^## /{f=0} f' README.md)
+          gh release create "$TAG" "pravah-$TAG.apk" "pravah-$TAG.apk.sha256" \
+            --title "Pravah $TAG" --notes "$notes" --target "$GITHUB_SHA"
+
+      - name: Remove signing key
+        if: always()
+        run: rm -f "$RUNNER_TEMP/pravah-release.jks"
